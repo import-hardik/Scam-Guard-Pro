@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spam Detector</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #D6C0B3;
+            margin: 0;
+        }
+        .container {
+            min-width: 50%;
+            text-align: center;
+            background-color: #AB886D;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        #transcript {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 10px;
+            background-color: #D6C0B3;
+            min-height: 100px;
+            font-size: 1.2em;
+            white-space: pre-wrap;
+        }
+        #startButton {
+            padding: 10px 20px;
+            font-size: 1em;
+            cursor: pointer;
+            background-color: #493628;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        #wordCount {
+            margin-top: 20px;
+            font-size: 1.2em;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <img src="../static/images/profile-pic.png" alt="logo" width="25%" id="lod">
+    <h1>SPAM DETECTOR</h1>
+    <button id="startButton">Start Conversation</button>
+    <div id="transcript"></div>
+    <div id="wordCount">Output: </div>
+</div>
+
+<script>
+    const startButton = document.getElementById('startButton');
+const transcriptDiv = document.getElementById('transcript');
+const wordCountDiv = document.getElementById('wordCount');
+const lodd = document.getElementById('wordCount');
+let transcriptText = "";
+let isListening = false; // To track the listening state
+
+// Function to update word count using the Python function
+function updateWordCount(transcript) {
+    // Call the Python function and update word count (via Flask or a Python back-end)
+    fetch('/word-count', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ transcript: transcript })
+    })
+    .then(response => response.json())
+    .then(data => {
+        wordCountDiv.textContent = 'Word Count: ' + data.word_count;
+    });
+}
+
+// Check for browser support for speech recognition
+if ('webkitSpeechRecognition' in window) {
+    const recognition = new webkitSpeechRecognition();
+    recognition.continuous = true; // Keep listening until explicitly stopped
+    recognition.interimResults = true;
+
+    recognition.onstart = function() {
+        startButton.textContent = 'Stop Listening'; // Change button text when listening starts
+        //lodd.src='../static/images/logo.png'
+        isListening = true;
+    };
+
+    recognition.onresult = function(event) {
+        let interimTranscript = '';
+
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+            if (event.results[i].isFinal) {
+                transcriptText += event.results[i][0].transcript + "\n";
+            } else {
+                interimTranscript += event.results[i][0].transcript;
+            }
+        }
+
+        transcriptDiv.textContent = transcriptText + interimTranscript;
+        updateWordCount(transcriptText);
+    };
+
+    // When the speaker stops speaking, stop recognition
+    recognition.onspeechend = function() {
+        recognition.stop();
+        startButton.textContent = 'Start Transcription'; // Reset button text
+        //lodd.src='../static/images/profile-pic.png'
+        isListening = false;
+    };
+
+    recognition.onerror = function(event) {
+        console.error('Speech recognition error', event);
+    };
+
+    recognition.onend = function() {
+        startButton.textContent = 'Start Transcription'; // Reset button text when recognition ends
+        isListening = false;
+    };
+
+    // Toggle the recognition when the button is clicked
+    startButton.addEventListener('click', function() {
+        if (isListening) {
+            recognition.stop(); // Stop listening if it's already running
+        } else {
+            transcriptText = ""; // Clear the transcript text before starting
+            transcriptDiv.textContent = "";
+            recognition.start(); // Start listening again
+        }
+    });
+} else {
+    alert("Your browser doesn't support speech recognition.");
+}
+
+</script>
+
+</body>
+</html>
