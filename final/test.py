@@ -47,5 +47,5 @@ def check_for_scam(api_key, input_text):
 # Example of using the function
 api_key = "YOUR_API_KEY_HERE"  # Insert your API key here
 input_text = "Congratulations! You've been selected for an exclusive offer to receive a $1,000 gift card."
-output = check_for_scam("AIzaSyB3mI8isXKm1TWQSOjU-hsdEXxv8I5n4nk", input_text)
+output = check_for_scam("Api key", input_text)
 print(output)
